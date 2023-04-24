@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
 using MongoDBApp;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace LR_3
             static string connectionString = "mongodb://localhost";
             static MongoClient client = new MongoClient(connectionString);
             static IMongoDatabase database = client.GetDatabase("test");
+            static IGridFSBucket gridFS = new GridFSBucket(database);
             public static void LaunchWork()
             {
                 SaveDocs().GetAwaiter().GetResult();
@@ -430,12 +432,104 @@ namespace LR_3
                 var result6 = await collection1.UpdateManyAsync(filter5, update5);
                 Console.WriteLine("знайдено за відповідністю: {0}; оновлено: {1}",
                     result6.MatchedCount, result6.ModifiedCount);
-                var people1 = await collection1.Find(new BsonDocument).ToListAsync();
+                var people1 = await collection1.Find(new BsonDocument()).ToListAsync();
                 foreach(var p in people1)
                 {
                     Console.WriteLine("{0} - {1}", p.Name, p.Age);
                 }
                 Console.WriteLine();
+            }
+            public static async Task DeletePerson()
+            {
+                Console.WriteLine("видалення записів за умовою Name = Harry Bosch");
+                var collection = database.GetCollection<BsonDocument>("people");
+                var filter = Builders<BsonDocument>.Filter.Eq("Name", "Harry Bosch");
+                await collection.DeleteOneAsync(filter);
+                var people = await collection.Find(new BsonDocument()).ToListAsync();
+                foreach(var p in people)
+                {
+                    Console.WriteLine(p);
+                }
+                Console.WriteLine();
+                //видалення записів за допомогою типу Person
+                Console.WriteLine("видалення записів за умовою Name = Irwin Irwing");
+                var collection1 = database.GetCollection<Person>("people");
+                var result = await collection1.DeleteManyAsync(p => p.Name == "Irwin Irwing");
+                Console.WriteLine("видалено: {0}", result.DeletedCount);
+                Console.WriteLine();
+            }
+            public static async Task BulkOperation()
+            {
+                Console.WriteLine("видалення даних за допомогою BulkOperation");
+                var collection = database.GetCollection<BsonDocument>("people");
+                var result = await collection.BulkWriteAsync(new WriteModel<BsonDocument>[]
+                {
+                    new DeleteOneModel<BsonDocument>(new BsonDocument("Name", "Honey"))
+                });
+                Console.WriteLine("видалено: {0}", result.DeletedCount);
+                var people = await collection.Find(new BsonDocument()).ToListAsync();
+                foreach(var p in people)
+                {
+                    Console.WriteLine(p);
+                }
+                Console.WriteLine();
+                //використання набору операцій
+                Console.WriteLine("використання набору операцій за допомогою BulkOperation");
+                var filter = Builders<BsonDocument>.Filter.Eq("Company.Name", "Los Angeles Police Department");
+                var update = Builders<BsonDocument>.Update.Set("Company.Name", "LAPD");
+                var newDoc = new BsonDocument
+                {
+                    {"Name","Barrel" },
+                    {"Age", 67 },
+                    {"Languages", new BsonArray{"english","german"} },
+                    {"Company", new BsonDocument{{"Name", "LAPD"}} }
+                };
+                var result1 = await collection.BulkWriteAsync(new WriteModel<BsonDocument>[]
+                    {
+                    new DeleteOneModel<BsonDocument>(new BsonDocument("Name", "Cisco")),
+                        new UpdateManyModel<BsonDocument>(filter,update),
+                        new InsertOneModel<BsonDocument>(newDoc)
+                });
+                Console.WriteLine("видалено: {0}; додано: {1}; оновлено: {2}", 
+                    result1.DeletedCount, result1.InsertedCount, result1.ModifiedCount);
+            }
+            public static async Task UploadFileAsync()
+            {
+                //Завантаження файлу до GridFS
+                using(Stream fs = new FileStream("D:\\Study\\NRDB\\Fritz Teufel.jpg", FileMode.Open))
+                {
+                    ObjectId id = await gridFS.UploadFromStreamAsync("Fritz Teufel.jpg", fs);
+                    Console.WriteLine("Id об'єкту: {0}", id.ToString());
+                }
+            }
+            public static async Task FindFileAsync()
+            {
+                //завантаження файлу із GridFS
+                using (Stream fs = new FileStream("D:\\Study\\NRDB\\kitty.jpg", FileMode.OpenOrCreate))
+                {
+                    await gridFS.DownloadToStreamByNameAsync("kitty.jpg", fs);
+                }
+                //пошук файлів
+                var filter = Builders<GridFSFileInfo>.Filter.Eq<string>(info => info.Filename, "Fritz Teufel.jpg");
+                var fileInfos = await gridFS.FindAsync(filter);
+                var fileInfo = fileInfos.FirstOrDefault();
+                Console.WriteLine("id = {0}", fileInfo.Id);
+            }
+            public static async Task ReplaceFileAsync()
+            {
+                using(Stream fs = new FileStream ("D:\\Study\\NRDB\\MR. Teufel.jpg",FileMode.Open))
+                {
+                    await gridFS.UploadFromStreamAsync("Fritz Teufel.jpg", fs,
+                        new GridFSUploadOptions { Metadata = new BsonDocument ("filename", "Fritz Teufel.jpg") });
+                }
+            }
+            public static async Task DeleteFileAsync()
+            {
+                var builder = new FilterDefinitionBuilder<GridFSFileInfo>();
+                var filter = Builders<GridFSFileInfo>.Filter.Eq<string>(info => info.Filename, "Fritz Teufel.jpg");
+                var fileInfos = await gridFS.FindAsync(filter);
+                var fileInfo = fileInfos.FirstOrDefault();
+                await gridFS.DeleteAsync(fileInfo.Id);
             }
         }
     }
