@@ -1,13 +1,13 @@
-﻿using MongoDB.Bson;
+﻿using LR_3;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
-using System.Configuration;
 
 namespace MongoDBApp
 {
-    [BsonIgnoreExtraElements]
+	[BsonIgnoreExtraElements]
     public class Person
     {
         //[BsonRepresentation(BsonType.ObjectId)]
@@ -34,16 +34,18 @@ namespace MongoDBApp
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            string con = ConfigurationManager.ConnectionStrings["MongoDb"].ConnectionString;
-            MongoClient client = new MongoClient(con);
-            GetDatabasesNames(client).GetAwaiter();
-            GetCollectionsNames(client).GetAwaiter();
-            GetSpecificCollection(client).GetAwaiter();
-            WorkingWithDocuments().GetAwaiter();
-            WorkingWithModels().GetAwaiter();
-            WorkingWithBsonClassMap().GetAwaiter();
-            WorkingWithConventions().GetAwaiter();
-            Console.ReadLine();
+            //string con = ConfigurationManager.ConnectionStrings["MongoDb"].ConnectionString;
+            //MongoClient client = new MongoClient(con);
+            //GetDatabasesNames(client).GetAwaiter();
+            //GetCollectionsNames(client).GetAwaiter();
+            //GetSpecificCollection(client).GetAwaiter();
+            //WorkingWithDocuments().GetAwaiter();
+            //WorkingWithModels().GetAwaiter();
+            //WorkingWithBsonClassMap().GetAwaiter();
+            //WorkingWithConventions().GetAwaiter();
+            DBWork.LaunchWork();
+
+			Console.ReadLine();
         }
         private static async Task GetDatabasesNames(MongoClient client)
         {

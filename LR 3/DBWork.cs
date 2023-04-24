@@ -2,11 +2,6 @@
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using MongoDBApp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LR_3
 {
@@ -14,6 +9,7 @@ namespace LR_3
     {
         public string Name { set; get; }
         public int Age { set; get; }
+    }
         public class DBWork
         {
             static string connectionString = "mongodb://localhost";
@@ -25,6 +21,15 @@ namespace LR_3
                 SaveDocs().GetAwaiter().GetResult();
                 FindAllDocs().GetAwaiter().GetResult();
                 FindSpecificDocs().GetAwaiter().GetResult();
+                SortPeople().GetAwaiter().GetResult();
+                ProjectPeople().GetAwaiter().GetResult();
+                UpdatePerson().GetAwaiter().GetResult();
+                DeletePerson().GetAwaiter().GetResult();
+                BulkOperation().GetAwaiter().GetResult();
+                UploadFileAsync().GetAwaiter().GetResult();
+                FindFileAsync().GetAwaiter().GetResult();
+                ReplaceFileAsync().GetAwaiter().GetResult();
+                DeleteFileAsync().GetAwaiter().GetResult();
                 Console.ReadLine();
             }
             private static async Task SaveDocs()
@@ -532,5 +537,4 @@ namespace LR_3
                 await gridFS.DeleteAsync(fileInfo.Id);
             }
         }
-    }
 }
