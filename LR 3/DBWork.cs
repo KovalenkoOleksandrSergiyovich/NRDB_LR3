@@ -38,23 +38,26 @@ namespace LR_3
                 BsonDocument person = new BsonDocument
             {
                 {"Name", "Madison" },
-                {"Age", "18" },
-                {"Languages", new BsonArray{"english", "german"} }
+                {"Age", 18 },
+                {"Languages", new BsonArray{"english", "german"} },
+                {"Company", new BsonDocument{ { "Name", "LAPD" } } }
             };
                 await collection.InsertOneAsync(person);
 
                 BsonDocument person1 = new BsonDocument
             {
                 {"Name", "Honey" },
-                {"Age", "52" },
-                {"Languages", new BsonArray{"english", "german", "french"} }
-            };
+                {"Age", 52 },
+                {"Languages", new BsonArray{"english", "german", "french"} },
+				{"Company", new BsonDocument{ { "Name", "Private Investigation Agency" } } }
+			};
                 BsonDocument person2 = new BsonDocument
             {
                 {"Name", "Cisco" },
-                {"Age", "35" },
-                {"Languages", new BsonArray{"french", "german"} }
-            };
+                {"Age", 35 },
+                {"Languages", new BsonArray{"french", "german"} },
+				{"Company", new BsonDocument{ { "Name", "Private Investigation Agency" } } }
+			};
                 await collection.InsertManyAsync(new[] { person1, person2 });
 
                 Person person3 = new Person
@@ -171,7 +174,7 @@ namespace LR_3
                 var people1 = await collection1.Find(filter2).ToListAsync();
                 foreach (var p in people1)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine("{0} - {1}", p.Name, p.Company.Name);
                 }
                 Console.WriteLine();
                 //пошук записів за поєднанням кількох фільтрів
@@ -208,7 +211,7 @@ namespace LR_3
                 var people_1 = await collection1.Find(filterOr).ToListAsync();
                 foreach (var p in people_1)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine("{0} - {1}", p.Name, p.Age);
                 }
                 Console.WriteLine();
                 //пошук записів, в яких Name = Madison та вік 18 років
@@ -219,25 +222,25 @@ namespace LR_3
                 var people_2 = await collection1.Find(filterAnd).ToListAsync();
                 foreach (var p in people_2)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine("{0} - {1}", p.Name, p.Age);
                 }
                 Console.WriteLine();
-                //пошук записів, в яких містяться англійська та французька мови
-                Console.WriteLine("пошук записів, в яких містяться англійська та французька мови");
-                var filter_lang = Builders<Person>.Filter.All("Languages", new List<string>() { "english", "french" });
+                //пошук записів, в яких містяться англійська та німецька мови
+                Console.WriteLine("пошук записів, в яких містяться англійська та німецька мови");
+                var filter_lang = Builders<Person>.Filter.All("Languages", new List<string>() { "english", "german" });
                 var people_3 = await collection1.Find(filterAnd).ToListAsync();
                 foreach (var p in people_3)
                 {
-                    Console.WriteLine(p);
+                Console.WriteLine("{0} - {1}", p.Name, string.Join(", ",p.Languages));
                 }
                 Console.WriteLine();
                 //пошук записів, в яких містяться лише дві мови
-                Console.WriteLine("пошук записів, в яких містяться англійська та французька мови");
+                Console.WriteLine("пошук записів, в яких містяться лише дві мови");
                 filter_lang = Builders<Person>.Filter.Size("Languages", 2);
                 people_3 = await collection1.Find(filterAnd).ToListAsync();
                 foreach (var p in people_3)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine("{0} - {1}", p.Name, string.Join(", ", p.Languages));
                 }
                 Console.WriteLine();
             }
@@ -249,7 +252,7 @@ namespace LR_3
                 var people = await collection.Find(new BsonDocument()).Sort("{Age:1}").ToListAsync();
                 foreach (var p in people)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine(p.ToString());
                 }
                 Console.WriteLine();
                 var collection1 = database.GetCollection<Person>("people");
@@ -258,7 +261,7 @@ namespace LR_3
                 var result = await collection1.Find(new BsonDocument()).SortByDescending(e => e.Name).ToListAsync();
                 foreach (var p in result)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine(p.Name);
                 }
                 Console.WriteLine();
                 //сортування за зростанням значення поля Age
@@ -266,7 +269,7 @@ namespace LR_3
                 var result1 = await collection1.Find(new BsonDocument()).SortBy(e => e.Age).ToListAsync();
                 foreach (var p in result1)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine("{0} - {1}", p.Name, p.Age);
                 }
                 Console.WriteLine();
                 //сортування за кількома ключами - за зростанням Company.Name та зменшенням Age
@@ -275,7 +278,7 @@ namespace LR_3
                 var result_comb = await collection1.Find(new BsonDocument()).Sort(sort).ToListAsync();
                 foreach (var p in result_comb)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine("{0} - {1} - {2}", p.Name, p.Age, p.Company.Name);
                 }
                 Console.WriteLine();
                 //пропуск перших двох документів із загальної кількості та виведення трьох наступних
@@ -284,7 +287,7 @@ namespace LR_3
                 var result_part = await collection.Find(filter).Skip(2).Limit(3).ToListAsync();
                 foreach (var p in result_comb)
                 {
-                    Console.WriteLine(p);
+                    Console.WriteLine(p.Name);
                 }
                 Console.WriteLine();
                 //обчислення кількості документів у вибірці
@@ -310,7 +313,7 @@ namespace LR_3
                 }
                 Console.WriteLine();
                 //проекція з одного класу в інший
-                Console.WriteLine("проекція з одного класу в інший");
+                Console.WriteLine("проекція з одного класу в інший\n");
                 var collection1 = database.GetCollection<Person>("people");
                 var filter = new BsonDocument();
                 var projection = Builders<Person>.Projection.Expression(p => new Employee { Name = p.Name, Age = p.Age });
@@ -321,7 +324,7 @@ namespace LR_3
                 }
                 Console.WriteLine();
                 //угрупування
-                Console.Write("угрупування");
+                Console.Write("угрупування\n");
                 people = await collection.Aggregate().Group(new BsonDocument { { "_id", "$Age" }, { "count", new BsonDocument("$sum", 1) } }).ToListAsync();
                 foreach(BsonDocument p in people)
                 {
@@ -339,7 +342,7 @@ namespace LR_3
                 //поєднання фільтрації та угрупування
                 Console.WriteLine("поєднання фільтрації та угрупування");
                 people = await collection.Aggregate().Match(new BsonDocument { { "Name", "Irwing"} })
-                    .Group(new BsonDocument { { "Company.Name", "LAPD" }, { "count", new BsonDocument("$sum", 1)} }).ToListAsync();
+                    .Group(new BsonDocument { { "_id", "$Company.Name" }, { "count", new BsonDocument("$sum", 1)} }).ToListAsync();
                 foreach (BsonDocument p in people)
                 {
                     Console.WriteLine("{0} - {1}", p.GetValue("_id"), p.GetValue("count"));
@@ -500,38 +503,42 @@ namespace LR_3
             }
             public static async Task UploadFileAsync()
             {
-                //Завантаження файлу до GridFS
-                using(Stream fs = new FileStream("D:\\Study\\NRDB\\Fritz Teufel.jpg", FileMode.Open))
+			Console.WriteLine("Завантаження файлу до бази даних");
+			//Завантаження файлу до GridFS
+			using (Stream fs = new FileStream("D:\\Study\\NRDB\\Fritz_Teufel.jpg", FileMode.Open))
                 {
-                    ObjectId id = await gridFS.UploadFromStreamAsync("Fritz Teufel.jpg", fs);
+                    ObjectId id = await gridFS.UploadFromStreamAsync("Fritz_Teufel.jpg", fs);
                     Console.WriteLine("Id об'єкту: {0}", id.ToString());
                 }
             }
             public static async Task FindFileAsync()
             {
+            Console.WriteLine("Пошук файлу в базі даних");
                 //завантаження файлу із GridFS
                 using (Stream fs = new FileStream("D:\\Study\\NRDB\\kitty.jpg", FileMode.OpenOrCreate))
                 {
-                    await gridFS.DownloadToStreamByNameAsync("kitty.jpg", fs);
+                    await gridFS.DownloadToStreamByNameAsync("Fritz_Teufel.jpg", fs);
                 }
                 //пошук файлів
-                var filter = Builders<GridFSFileInfo>.Filter.Eq<string>(info => info.Filename, "Fritz Teufel.jpg");
+                var filter = Builders<GridFSFileInfo>.Filter.Eq<string>(info => info.Filename, "Fritz_Teufel.jpg");
                 var fileInfos = await gridFS.FindAsync(filter);
                 var fileInfo = fileInfos.FirstOrDefault();
                 Console.WriteLine("id = {0}", fileInfo.Id);
             }
             public static async Task ReplaceFileAsync()
             {
-                using(Stream fs = new FileStream ("D:\\Study\\NRDB\\MR. Teufel.jpg",FileMode.Open))
+			Console.WriteLine("Заміна файлу в базі даних");
+			using (Stream fs = new FileStream ("D:\\Study\\NRDB\\MR.Teufel.jpg",FileMode.Open))
                 {
-                    await gridFS.UploadFromStreamAsync("Fritz Teufel.jpg", fs,
-                        new GridFSUploadOptions { Metadata = new BsonDocument ("filename", "Fritz Teufel.jpg") });
+                    await gridFS.UploadFromStreamAsync("Fritz_Teufel.jpg", fs,
+                        new GridFSUploadOptions { Metadata = new BsonDocument ("filename", "Fritz_Teufel.jpg") });
                 }
             }
             public static async Task DeleteFileAsync()
             {
-                var builder = new FilterDefinitionBuilder<GridFSFileInfo>();
-                var filter = Builders<GridFSFileInfo>.Filter.Eq<string>(info => info.Filename, "Fritz Teufel.jpg");
+			Console.WriteLine("Видалення файлу з бази даних");
+			var builder = new FilterDefinitionBuilder<GridFSFileInfo>();
+                var filter = Builders<GridFSFileInfo>.Filter.Eq<string>(info => info.Filename, "Fritz_Teufel.jpg");
                 var fileInfos = await gridFS.FindAsync(filter);
                 var fileInfo = fileInfos.FirstOrDefault();
                 await gridFS.DeleteAsync(fileInfo.Id);
